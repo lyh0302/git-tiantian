@@ -11,10 +11,10 @@ from io import BytesIO
 from django.views.generic import View
 from django.core.mail import send_mail
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer,SignatureExpired,BadSignature
-# from django.contrib.auth.models import AbstractUser
 from tiantiantest import settings
+from tian_celery.tasks import task_send_mail
 import re
-
+from django.contrib.auth import authenticate, login
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -64,7 +64,7 @@ class RegisterView(View):
         user.is_active = 0
         user.save()
 
-
+        '''发送邮件'''
         serializer=Serializer(settings.SECRET_KEY,3600)
         info={"confirm":user.id}
         token=serializer.dumps(info).decode()
@@ -77,7 +77,7 @@ class RegisterView(View):
         receiver=[email]
         html_message='<h1>%s,欢迎您成为天天生鲜注册会员</h1>请点击下面链接激活您的账户<br/><a href="%s">%s</a>'%(username,encryption_url,encryption_url)
 
-        send_mail(subject,message,sender,receiver,html_message=html_message)
+        task_send_mail.delay(subject,message,sender,receiver,html_message)
 
         return redirect(reverse('user:login'))
 
@@ -97,51 +97,7 @@ class  ActiveView(View):
             return  HttpResponse("激活连接已过期")
         except BadSignature as e:
             return HttpResponse("激活连接非法")
-# def register(request):
-#     '''注册'''
-#     if request.method=='GET':
-#         return render(request, 'register.html')
-#     elif request.method=='POST':
-#         #接收数据
-#         # 接收参数
-#         username = request.POST.get('user_name')
-#         password = request.POST.get('pwd')
-#         cpwd = request.POST.get('cpwd')
-#         email = request.POST.get('email')
-#         allow = request.POST.get('allow')
-#
-#         # 运行数据检验
-#         if not all([username, password, cpwd, email]):
-#             # 数据不完整
-#             return render(request, 'register.html', {'errmsg': '数据不完整'})
-#         # 校验密码
-#         if password != cpwd:
-#             return render(request, 'register.html', {'errmsg': '两次密码不一致'})
-#             # 校验邮箱
-#         if not re.match(r'^[a-z0-9][\w.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
-#             return render(request, 'register.html', {'errmsg': '邮箱格式不正确'})
-#
-#         if allow != 'on':
-#             return render(request, 'register.html', {'errmsg': '请同意协议'})
-#         # 校验用户名是否重复
-#         try:
-#             user = User.objects.get(username=username)
-#         except User.DoesNotExist:
-#             # 用户名不存在
-#             user = None
-#
-#         if user:
-#             # 用户名存在
-#             return render(request, 'register.html', {'errmsg': '用户名已存在'})
-#
-#         user = User.objects.create_user(username, email, password)
-#         user.is_active = 0
-#         user.save()
-#
-#         return redirect(reverse('user:login'))
-#
-# # # 注册处理
-# # def register_handler(request):
+
 
 
 #登录页面
@@ -306,18 +262,19 @@ def logout(request):
 '''
 #验证码测试
 def verificationcode(request):
-    with open('/home/yong/c罗.jpg','rb') as file:
+    with open('/home/utf-8/02.jpg','rb') as file:
         return HttpResponse(file.read(),'image/jpeg')
 '''
 
 
 def verificationcode(request):
-    bgcolor = (random.randrange(50, 100), random.randrange(50, 100), 150)
+    #背景颜色
+    bgcolor = (random.randrange(256), random.randrange(256), random.randrange(256))
     width = 160
     height = 40
     # 创建画面对象
     # im = Image.new('RGB', (width, height), bgcolor)
-    im = Image.new('RGB', (width, height), (200,230,200))
+    im = Image.new('RGB', (width, height), bgcolor)
     # 创建画笔对象
     draw = ImageDraw.Draw(im)
     # 调用画笔的point()函数绘制噪点
@@ -332,14 +289,13 @@ def verificationcode(request):
     for i in range(0, 4):
         rand_str += str1[random.randrange(0, len(str1))]
     # 构造字体对象
-    font = ImageFont.truetype('FreeMono.ttf', 25)
+    font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSerifItalic.ttf', 30)
     # 构造字体颜色
     fontcolor = (200, random.randrange(0, 200), random.randrange(0, 200))
+    for i in range(4):
     # 绘制4个字
-    draw.text((20, 5), rand_str[0], font=font, fill=fontcolor)
-    draw.text((55, 5), rand_str[1], font=font, fill=fontcolor)
-    draw.text((90, 5), rand_str[2], font=font, fill=fontcolor)
-    draw.text((125, 5), rand_str[3], font=font, fill=fontcolor)
+        fontcolor = (255, random.randrange(0, 255), random.randrange(0, 255))
+        draw.text((5 + 23 * i, 2), rand_str[i], font=font, fill=fontcolor)
     # 释放画笔
     del draw
     #创建内存读写的对象

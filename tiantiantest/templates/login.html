@@ -29,7 +29,7 @@
 						<input type="password" name="pwd" class="pass_input" placeholder="请输入密码">
 						<div class="pwd_error">输入错误</div>
                         <input type="text" name="verificationcode" class="vercode_input" placeholder="请输入验证码" style="width: 170px"/>
-                            <img src="/user/verificationcode" alt="验证码" name="verificationcode_input" class="verificationcode_input" id="verificationcode"/>
+                            <img src="/user/verificationcode" alt="验证码" name="verificationcode_input" class="verificationcode_input" id="verification"/>
                             <div class="verificationcode_error">输入错误</div>
 
                         <div class="more_input clearfix">
@@ -58,3 +58,12 @@
     </div>
 </body>
 </html>
+<script>
+{#    var verification=document.getElementById("verification")#}
+{#    var url = "/user/verification?num="#}
+{#    verification.onclick = function () {#}
+{#        var num = new Date().getTime()#}
+{#        url+=num#}
+{#        verification.src=url#}
+{#    }#}
+</script>
