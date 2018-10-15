@@ -15,8 +15,8 @@ from tiantiantest import settings
 from tian_celery.tasks import task_send_mail
 import re
 from django.contrib.auth import authenticate, login
-reload(sys)
-sys.setdefaultencoding('utf-8')
+# reload(sys)
+# sys.setdefaultencoding('utf-8')
 
 
 
@@ -102,76 +102,94 @@ class  ActiveView(View):
 
 #登录页面
 class LoginView(View):
+    # 登录
     def get(self,request):
-        context = {}
 
-        # 判断是否存在记住用户名的cookie
-        cookie_user_name = request.COOKIES.get('cookie_user_name')
-        if cookie_user_name:
-            context['cookie_user_name'] = cookie_user_name
-
-        # 判断验证码
-        verificationcode_error = request.COOKIES.get('verificationcode_error')
-        if verificationcode_error:
-            context['verificationcode_error'] = '验证码错误'
-
-        # 判断用户名
-        user_error = request.COOKIES.get('user_error')
-        if user_error:
-            context['user_error'] = '用户名错误'
-
-        # 判断密码
-        pwd_error = request.COOKIES.get('pwd_error')
-        if pwd_error:
-            context['pwd_error'] = '密码错误'
-
-        # 判断验证码是否正确
-        return render(request, 'login.html', context)
-    def post(self,request):
-        # 接收参数
-        request_params = request.POST
-
-        # 接收验证码并判断
-        verificationcode = request_params.get('verificationcode')
-
-        if request.session['verificationcode'].upper() != verificationcode.upper():
-            response = redirect('/user/login_ui')
-            response.set_cookie('verificationcode_error', 1)
-            response.set_cookie('name_error', 1, -1)
-            response.set_cookie('pwd_error', 1, -1)
-            return response
-
-        # 接收其他参数
-        user_name = request_params.get('user_name')
-        user_pwd = request_params.get('user_pwd')
-        remember = request_params.get('remember')
-
-        # 加密
-        user_pwd = myutil.mymd5(user_pwd)
-
-        # 判断
-        if User.objects.filter(uname=user_name, upwd=user_pwd).exists():
-            response = HttpResponseRedirect('/book/index')
-            # 写cookie
-            if remember:
-                response.set_cookie('cookie_user_name', user_name, max_age=2 * 7 * 24 * 3600)
-
-            # 写session
-            request.session['login_info'] = user_name
-
-            response.set_cookie('verificationcode_error', 1, -1)
-            response.set_cookie('name_error', 1, -1)
-            response.set_cookie('pwd_error', 1, -1)
+        if 'username' in request.COOKIES:
+            username=request.COOKIES.get('username')
+            checked='checked'
         else:
-            response = redirect('/user/login_ui')
-            if not User.objects.filter(uname=user_name).exists():
-                response.set_cookie('name_error', 1)
-            else:
-                response.set_cookie('name_error', 1, -1)
-                response.set_cookie('pwd_error', 1)
-            response.set_cookie('verificationcode_error', 1, -1)
+            username=''
+            checked=''
 
-            return redirect(reverse('user:index'))
+        return render(request,'login.html',{'username':username,'checked':checked})
+
+    def post(self,request):
+        #接收参数
+        username = request.POST.get('user_name')
+        password = request.POST.get('pwd')
+
+        if not all([username,password]):
+            return render(request,'login.html',{'errmsg':'数据不完整'})
+
+        user = authenticate(username=username,password=password)
+
+        print('user',user)
+
+        if user != None:
+            if user.is_active:
+
+                login(request,user)
+
+                response=redirect(reverse('user：index'))
+
+                remember=request.POST.get('remember')
+
+                if remember == 'on':
+                    response.set_cookie('username',username,max_age=7*24*3600)
+                    request.session['login_info'] = username
+                else:
+                    response.delete_cookie('username')
+
+                return response
+            else:
+                return render(request,'login.html',{'errmsg':'账户未激活'})
+        else:
+            return render(request,'login.html',{'errmsg':'用户名或密码错误'})
+        # # 接收参数
+        # request_params = request.POST
+        #
+        # # 接收验证码并判断
+        # verificationcode = request_params.get('verificationcode')
+        #
+        # if request.session['verificationcode'].upper() != verificationcode.upper():
+        #     response = redirect('/user/login_ui')
+        #     response.set_cookie('verificationcode_error', 1)
+        #     response.set_cookie('name_error', 1, -1)
+        #     response.set_cookie('pwd_error', 1, -1)
+        #     return response
+        #
+        # # 接收其他参数
+        # user_name = request_params.get('user_name')
+        # user_pwd = request_params.get('user_pwd')
+        # remember = request_params.get('remember')
+        #
+        # # 加密
+        # user_pwd = myutil.mymd5(user_pwd)
+        #
+        # # 判断
+        # if User.objects.filter(uname=user_name, upwd=user_pwd).exists():
+        #     response = HttpResponseRedirect('/book/index')
+        #     # 写cookie
+        #     if remember:
+        #         response.set_cookie('cookie_user_name', user_name, max_age=2 * 7 * 24 * 3600)
+        #
+        #     # 写session
+        #     request.session['login_info'] = user_name
+        #
+        #     response.set_cookie('verificationcode_error', 1, -1)
+        #     response.set_cookie('name_error', 1, -1)
+        #     response.set_cookie('pwd_error', 1, -1)
+        # else:
+        #     response = redirect('/user/login_ui')
+        #     if not User.objects.filter(uname=user_name).exists():
+        #         response.set_cookie('name_error', 1)
+        #     else:
+        #         response.set_cookie('name_error', 1, -1)
+        #         response.set_cookie('pwd_error', 1)
+        #     response.set_cookie('verificationcode_error', 1, -1)
+        #
+        #     return redirect(reverse('user:index'))
 
 
 # def login(request):
@@ -320,3 +338,10 @@ def checkusername(request):
         return HttpResponse(1)
     else:
         return HttpResponse(0)
+
+def session(request):
+    request.session.set_expiry(3600*24*14)
+    request.session["session1"] = "value1"
+    request.session["session2"] = "value2"
+    request.session["session2"] = "老王"
+    return HttpResponse("set_session")

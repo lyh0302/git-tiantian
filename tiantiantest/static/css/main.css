@@ -290,10 +290,10 @@ html,body{height:100%}
 .login_title a{width:100px;height:20px;display:block;font-size:16px;color:#5fb42a;text-indent:26px;background:url(../images/icons02.png) left 5px no-repeat;float:left;margin:20px 0 0 36px}
 
 .form_input{width:308px;height:250px;margin:20px auto;position:relative;}
-.name_input,.pass_input,.vercode_input,.verificationcode_input{width:306px;height:36px;border:1px solid #e0e0e0;background:url(../images/icons02.png) 280px -41px no-repeat #f8f8f8;outline:none;font-size:14px;text-indent:10px;position: absolute;left:0;top:0}
+.name_input,.pass_input{width:306px;height:36px;border:1px solid #e0e0e0;background:url(../images/icons02.png) 280px -41px no-repeat #f8f8f8;outline:none;font-size:14px;text-indent:10px;position: absolute;left:0;top:0}
 .pass_input{top:65px;background-position:280px -95px;}
-.vercode_input,.verificationcode_input{display:inline-block;position:relative;top:120px;background-position: 280px -100px}
-.verificationcode_input{top:135px;width: 120px;height: 39px;}
+/*.vercode_input,.verificationcode_input{display:inline-block;position:relative;top:120px;background-position: 280px -100px}*/
+/*.verificationcode_input{top:135px;width: 120px;height: 39px;}*/
 
 
 .user_error,.pwd_error,.verificationcode_error{color:#f00;position:absolute;left:0;top:43px;display:none}
